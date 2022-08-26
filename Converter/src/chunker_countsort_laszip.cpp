@@ -463,6 +463,14 @@ namespace chunker_countsort_laszip {
 
 				attributeClassification->min.x = std::min(attributeClassification->min.x, double(point->classification));
 				attributeClassification->max.x = std::max(attributeClassification->max.x, double(point->classification));
+
+//                MC EDITS
+                if (!std::count(attributeClassification->distinctValues.begin(),attributeClassification->distinctValues.end(),double(point->classification))){
+                    //Doesn't Exist - so add it
+                    attributeClassification->distinctValues.emplace_back(double(point->classification));
+                    cout << "adding Classification to list: : " << double(point->classification) << endl;
+
+                }
 			};
 
 			int offsetSourceId = outputAttributes.getOffset("point source id");
@@ -894,6 +902,11 @@ namespace chunker_countsort_laszip {
 				target.max.x = std::max(target.max.x, source.max.x);
 				target.max.y = std::max(target.max.y, source.max.y);
 				target.max.z = std::max(target.max.z, source.max.z);
+
+                //MC EDITS
+               if(target.name=="classification"){
+                    target.distinctValues = source.distinctValues;
+               }
 			}
 
 
@@ -983,6 +996,13 @@ namespace chunker_countsort_laszip {
 			jsAttribute["elementSize"] = attribute.elementSize;
 			jsAttribute["description"] = attribute.description;
 			jsAttribute["type"] = getAttributeTypename(attribute.type);
+
+            //            MC EDIT
+            if (attribute.name == "classification"){
+                jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+
+//                        vector<int>{ attribute.distinctValues };
+            }
 
 			if (attribute.numElements == 1) {
 				jsAttribute["min"] = vector<double>{ attribute.min.x };

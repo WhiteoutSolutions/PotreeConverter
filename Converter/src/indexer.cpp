@@ -79,8 +79,22 @@ namespace indexer{
 			auto jsMin = jsAttribute["min"];
 			auto jsMax = jsAttribute["max"];
 
-            vector<int> dValues;
-			Attribute attribute(name, size, numElements, elementSize, type,dValues);
+//            MC EDITS
+
+            vector<int>  dValues ;
+            if (name == "classification"){
+                vector<int> a = jsAttribute["distinctValues"];
+              dValues = a;
+            }
+
+            Attribute attribute(name, size, numElements, elementSize, type, dValues);
+
+
+//            if (name == "classification"){
+//                = vector<int>{ attribute.distinctValues };
+//
+////                        vector<int>{ attribute.distinctValues };
+//            }
 
 			if (numElements >= 1) {
 				attribute.min.x = jsMin[0] == nullptr ? Infinity : double(jsMin[0]);
@@ -291,6 +305,27 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 		//return "[" + d(value.x) + ", " + d(value.y) + ", " + d(value.z) + "]";
 	};
 
+    auto vecToJson2Int = [d](vector<int> values) {
+
+        stringstream ss;
+        ss << "[";
+
+        for (int i = 0; i < values.size(); i++) {
+
+            ss << d(values[i]);
+
+            if (i < values.size() - 1) {
+                ss << ", ";
+            }
+        }
+        ss << "]";
+
+        return ss.str();
+
+
+        //return "[" + d(value.x) + ", " + d(value.y) + ", " + d(value.z) + "]";
+    };
+
 	auto octreeDepth = this->octreeDepth;
 	auto getHierarchyJsonString = [hierarchy, octreeDepth, t, s]() {
 
@@ -316,7 +351,7 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 	};
 
 	Attributes& attributes = this->attributes;
-	auto getAttributesJsonString = [&attributes, t, s, toJson, vecToJson]() {
+	auto getAttributesJsonString = [&attributes, t, s, toJson, vecToJson, vecToJson2Int]() {
 
 		stringstream ss;
 		ss << "[" << endl;
@@ -345,6 +380,10 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 				ss << t(3) << s("min") << ": " << vecToJson(vector<double>{ attribute.min.x, attribute.min.y, attribute.min.z }) << "," << endl;
 				ss << t(3) << s("max") << ": " << vecToJson(vector<double>{ attribute.max.x, attribute.max.y, attribute.max.z }) << endl;
 			}
+              if (attribute.name == "classification"){
+                  ss << t(3) << s("distinctValues") << ": " << vecToJson2Int(vector<int>{ attribute.distinctValues }) << endl;
+              }
+
 
 			if (i < attributes.list.size() - 1) {
 				ss << t(2) << "},{" << endl;
@@ -353,7 +392,6 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 			}
 
 		}
-		
 
 		ss << t(1) << "]";
 

@@ -79,7 +79,8 @@ namespace indexer{
 			auto jsMin = jsAttribute["min"];
 			auto jsMax = jsAttribute["max"];
 
-			Attribute attribute(name, size, numElements, elementSize, type);
+            vector<int> dValues;
+			Attribute attribute(name, size, numElements, elementSize, type,dValues);
 
 			if (numElements >= 1) {
 				attribute.min.x = jsMin[0] == nullptr ? Infinity : double(jsMin[0]);

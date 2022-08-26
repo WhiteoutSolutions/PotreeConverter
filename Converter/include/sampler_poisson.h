@@ -97,7 +97,8 @@ struct SamplerPoisson : public Sampler {
 					double y = (xyz[1] * scale.y) + offset.y;
 					double z = (xyz[2] * scale.z) + offset.z;
 
-					Point point = { x, y, z, i, childIndex };
+
+					Point point = { x, y, z, static_cast<int32_t>(i), static_cast<int32_t>(childIndex) };
 
 					points.push_back(point);
 				}

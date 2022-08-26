@@ -106,7 +106,8 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
 		int elementSize = getAttributeTypeSize(info.type);
 
 		int size = info.numElements * elementSize;
-		Attribute xyz(name, size, info.numElements, elementSize, info.type);
+        vector<int> dValues;
+		Attribute xyz(name, size, info.numElements, elementSize, info.type,dValues);
 
 		attributes.push_back(xyz);
 	}
@@ -117,25 +118,26 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
 
 inline vector<Attribute> computeOutputAttributes(LasHeader& header) {
 	auto format = header.pointDataFormat;
+    vector<int> dValues;
 
-	Attribute xyz("position", 12, 3, 4, AttributeType::INT32);
-	Attribute intensity("intensity", 2, 1, 2, AttributeType::UINT16);
-	Attribute returns("returns", 1, 1, 1, AttributeType::UINT8);
-	Attribute returnNumber("return number", 1, 1, 1, AttributeType::UINT8);
-	Attribute numberOfReturns("number of returns", 1, 1, 1, AttributeType::UINT8);
-	Attribute classification("classification", 1, 1, 1, AttributeType::UINT8);
-	Attribute scanAngleRank("scan angle rank", 1, 1, 1, AttributeType::UINT8);
-	Attribute userData("user data", 1, 1, 1, AttributeType::UINT8);
-	Attribute pointSourceId("point source id", 2, 1, 2, AttributeType::UINT16);
-	Attribute gpsTime("gps-time", 8, 1, 8, AttributeType::DOUBLE);
-	Attribute rgb("rgb", 6, 3, 2, AttributeType::UINT16);
-	Attribute wavePacketDescriptorIndex("wave packet descriptor index", 1, 1, 1, AttributeType::UINT8);
-	Attribute byteOffsetToWaveformData("byte offset to waveform data", 8, 1, 8, AttributeType::UINT64);
-	Attribute waveformPacketSize("waveform packet size", 4, 1, 4, AttributeType::UINT32);
-	Attribute returnPointWaveformLocation("return point waveform location", 4, 1, 4, AttributeType::FLOAT);
-	Attribute XYZt("XYZ(t)", 12, 3, 4, AttributeType::FLOAT);
-	Attribute classificationFlags("classification flags", 1, 1, 1, AttributeType::UINT8);
-	Attribute scanAngle("scan angle", 2, 1, 2, AttributeType::INT16);
+	Attribute xyz("position", 12, 3, 4, AttributeType::INT32,  dValues);
+	Attribute intensity("intensity", 2, 1, 2, AttributeType::UINT16,  dValues);
+	Attribute returns("returns", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute returnNumber("return number", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute numberOfReturns("number of returns", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute classification("classification", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute scanAngleRank("scan angle rank", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute userData("user data", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute pointSourceId("point source id", 2, 1, 2, AttributeType::UINT16,dValues);
+	Attribute gpsTime("gps-time", 8, 1, 8, AttributeType::DOUBLE,dValues);
+	Attribute rgb("rgb", 6, 3, 2, AttributeType::UINT16,dValues);
+	Attribute wavePacketDescriptorIndex("wave packet descriptor index", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute byteOffsetToWaveformData("byte offset to waveform data", 8, 1, 8, AttributeType::UINT64,dValues);
+	Attribute waveformPacketSize("waveform packet size", 4, 1, 4, AttributeType::UINT32,dValues);
+	Attribute returnPointWaveformLocation("return point waveform location", 4, 1, 4, AttributeType::FLOAT,dValues);
+	Attribute XYZt("XYZ(t)", 12, 3, 4, AttributeType::FLOAT,dValues);
+	Attribute classificationFlags("classification flags", 1, 1, 1, AttributeType::UINT8,dValues);
+	Attribute scanAngle("scan angle", 2, 1, 2, AttributeType::INT16,dValues);
 
 	vector<Attribute> list;
 

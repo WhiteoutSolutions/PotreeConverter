@@ -63,6 +63,7 @@ LasTypeInfo lasTypeInfo(int typeID) {
 	} else {
 		cout << "ERROR: unkown extra attribute type: " << typeID << endl;
 		exit(123);
+
 	}
 
 

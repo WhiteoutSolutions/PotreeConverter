@@ -113,6 +113,7 @@ struct Attribute {
 	int numElements = 0;
 	int elementSize = 0;
 	AttributeType type = AttributeType::UNDEFINED;
+    vector<int> distinctValues;
 
 	// TODO: should be type-dependent, not always double. won't work properly with 64 bit integers
 	Vector3 min = {Infinity, Infinity, Infinity};
@@ -122,12 +123,13 @@ struct Attribute {
 
 	}
 
-	Attribute(string name, int size, int numElements, int elementSize, AttributeType type) {
+	Attribute(string name, int size, int numElements, int elementSize, AttributeType type,vector<int> distinctValues) {
 		this->name = name;
 		this->size = size;
 		this->numElements = numElements;
 		this->elementSize = elementSize;
 		this->type = type;
+        this->distinctValues = std::move(distinctValues);
 	}
 };
 

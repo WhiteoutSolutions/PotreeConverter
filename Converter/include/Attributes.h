@@ -130,7 +130,6 @@ struct Attribute {
 		this->elementSize = elementSize;
 		this->type = type;
         this->distinctValues = distinctValues;
-//        this->distinctValues = {1,2,5,10,11,15,56,72};
 
 	}
 };

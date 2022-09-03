@@ -2,6 +2,8 @@
 #include <cerrno>
 #include <execution>
 #include <algorithm>
+#include <cctype>
+
 
 #include "indexer.h"
 
@@ -10,6 +12,7 @@
 #include "PotreeConverter.h"
 #include "DbgWriter.h"
 #include "brotli/encode.h"
+
 
 using std::unique_lock;
 
@@ -80,12 +83,43 @@ namespace indexer{
 			auto jsMax = jsAttribute["max"];
 
 //            MC EDITS
-
             vector<int>  dValues ;
-            if (name == "classification"){
-                vector<int> a = jsAttribute["distinctValues"];
-              dValues = a;
+            if (name == "classification" ){
+				//auto dVal = jsAttribute["distinctValues"];
+				//if (dVal != nlohmann::detail::value_t::null) {
+					vector<int> a = jsAttribute["distinctValues"];
+					dValues = a;
+				//}
+                
+             
             }
+
+			//MC EDITS
+			if (name == "return number" ) {
+				auto dVal = jsAttribute["distinctValues"];
+
+				std::cout << "TYPE CLASS:::  " << typeid(dVal).name() << std::endl;
+				//if (dVal != nlohmann::detail::value_t::null) {
+				vector<int> a = jsAttribute["distinctValues"];
+				dValues = a;
+				//}
+
+
+			}
+
+			//MC EDITS
+			if ( name == "treeClassification") {
+				auto dVal = jsAttribute["distinctValues"];
+				//if (dVal != nlohmann::detail::value_t::null) {
+				vector<int> a = jsAttribute["distinctValues"];
+				dValues = a;
+				//}
+
+
+			}
+
+
+
 
             Attribute attribute(name, size, numElements, elementSize, type, dValues);
 
@@ -380,11 +414,11 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 				ss << t(3) << s("min") << ": " << vecToJson(vector<double>{ attribute.min.x, attribute.min.y, attribute.min.z }) << "," << endl;
 				ss << t(3) << s("max") << ": " << vecToJson(vector<double>{ attribute.max.x, attribute.max.y, attribute.max.z }) << endl;
 			}
-              if (attribute.name == "classification"){
+              if ( attribute.name == "classification" || attribute.name == "return number" || attribute.name == "treeClassification") {
                   ss << t(3) << s("distinctValues") << ": " << vecToJson2Int(vector<int>{ attribute.distinctValues }) << endl;
               }
 
-
+		
 			if (i < attributes.list.size() - 1) {
 				ss << t(2) << "},{" << endl;
 			} else {

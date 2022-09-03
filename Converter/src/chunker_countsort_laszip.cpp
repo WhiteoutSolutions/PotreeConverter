@@ -416,6 +416,15 @@ namespace chunker_countsort_laszip {
 
 				attributeReturnNumber->min.x = std::min(attributeReturnNumber->min.x, double(value));
 				attributeReturnNumber->max.x = std::max(attributeReturnNumber->max.x, double(value));
+
+				//MC EDITS
+				if (!std::count(attributeReturnNumber->distinctValues.begin(), attributeReturnNumber->distinctValues.end(), double(value))) {
+					//Doesn't Exist - so add it
+					attributeReturnNumber->distinctValues.emplace_back(double(value));
+					cout << "adding returnNumber  to list: : " << double(value) << endl;
+
+				}
+
 			};
 
 			int offsetNumberOfReturns = outputAttributes.getOffset("number of returns");
@@ -627,6 +636,20 @@ namespace chunker_countsort_laszip {
 							attribute->max.y = std::max(attribute->max.y, y);
 							attribute->max.z = std::max(attribute->max.z, z);
 						}
+						
+						
+						//                MC EDITS
+						if (attribute->name == "treeClassification") {
+							double cVal = f(point->extra_bytes + sourceOffset);
+
+							if (!std::count(attribute->distinctValues.begin(), attribute->distinctValues.end(), double(cVal))) {
+								//Doesn't Exist - so add it
+								attribute->distinctValues.emplace_back(double(cVal));
+								cout << "adding treeClassification to list: : " << double(point->classification) << endl;
+
+							}
+						}
+						
 
 
 					};
@@ -907,6 +930,16 @@ namespace chunker_countsort_laszip {
                if(target.name=="classification"){
                     target.distinctValues = source.distinctValues;
                }
+
+			   //MC EDITS
+			   if (target.name == "return number") {
+				   target.distinctValues = source.distinctValues;
+			   }
+
+			   //MC EDITS
+			   if (target.name == "treeClassification") {
+				   target.distinctValues = source.distinctValues;
+			   }
 			}
 
 
@@ -1000,9 +1033,17 @@ namespace chunker_countsort_laszip {
             //            MC EDIT
             if (attribute.name == "classification"){
                 jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
-
-//                        vector<int>{ attribute.distinctValues };
             }
+
+			//            MC EDIT
+			if ( attribute.name == "return number") {
+				jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+			}
+			
+			//            MC EDIT
+			if (attribute.name == "treeClassification") {
+				jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+			}
 
 			if (attribute.numElements == 1) {
 				jsAttribute["min"] = vector<double>{ attribute.min.x };

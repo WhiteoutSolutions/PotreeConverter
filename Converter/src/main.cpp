@@ -17,6 +17,8 @@
 
 using namespace std;
 
+
+
 Options parseArguments(int argc, char** argv) {
 	Arguments args(argc, argv);
 
@@ -30,6 +32,8 @@ Options parseArguments(int argc, char** argv) {
 	args.addArgument("no-chunking", "Disable chunking phase");
 	args.addArgument("no-indexing", "Disable indexing phase");
 	args.addArgument("attributes", "Attributes in output file");
+	//MC EDITS
+	args.addArgument("distinctvalues", "List of Distinct Values of the additional fields for calculating distinct values for the metadata.json");
 	args.addArgument("generate-page,p", "Generate a ready to use web page with the given name");
 	args.addArgument("title", "Page title used when generating a web page");
 
@@ -104,6 +108,23 @@ Options parseArguments(int argc, char** argv) {
 
 	vector<string> attributes = args.get("attributes").as<vector<string>>();
 
+	string tmpDistinctValues = args.get("distinctvalues").as<string>();
+	vector<string> distinctvalues;
+
+	if (tmpDistinctValues.size() >= 1)
+	{
+		logDebug("Distinct Values exist in input parameters with value: " + tmpDistinctValues);
+		stringstream ss(tmpDistinctValues);
+
+		while (ss.good())
+		{
+			string substr;
+			getline(ss, substr, ',');
+			distinctvalues.push_back(substr);
+		}
+		
+	}
+
 	bool generatePage = args.has("generate-page");
 	string pageName = "";
 	if (generatePage) {
@@ -123,6 +144,7 @@ Options parseArguments(int argc, char** argv) {
 	options.chunkMethod = chunkMethod;
 	//options.flags = flags;
 	options.attributes = attributes;
+	options.distinctvalues = distinctvalues;
 	options.generatePage = generatePage;
 	options.pageName = pageName;
 	options.pageTitle = pageTitle;
@@ -491,6 +513,8 @@ void generatePage(string exePath, string pagedir, string pagename) {
 int main(int argc, char** argv) {
 
 
+	//_CrtDbgBreak();
+
 	double tStart = now(); 
 
 	auto exePath = fs::canonical(fs::absolute(argv[0])).parent_path().string();
@@ -507,7 +531,7 @@ int main(int argc, char** argv) {
 		options.name = name;
 	}
 
-	auto outputAttributes = computeOutputAttributes(sources, options.attributes);
+	auto outputAttributes = computeOutputAttributes(sources, options.attributes, options.distinctvalues);
 	cout << toString(outputAttributes);
 
 	auto stats = computeStats(sources);

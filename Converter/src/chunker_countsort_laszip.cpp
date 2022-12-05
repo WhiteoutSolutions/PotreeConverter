@@ -639,13 +639,25 @@ namespace chunker_countsort_laszip {
 						
 						
 						//                MC EDITS
-						if (attribute->name == "treeClassification") {
+						//if (attribute->name == "treeClassification") {
+						//	double cVal = f(point->extra_bytes + sourceOffset);
+
+						//	if (!std::count(attribute->distinctValues.begin(), attribute->distinctValues.end(), double(cVal))) {
+						//		//Doesn't Exist - so add it
+						//		attribute->distinctValues.emplace_back(double(cVal));
+						//		cout << "adding treeClassification to list: : " << double(point->classification) << endl;
+
+						//	}
+						//}
+
+						//MC EDITS
+						if (attribute->usesDistinctValues) {
 							double cVal = f(point->extra_bytes + sourceOffset);
 
 							if (!std::count(attribute->distinctValues.begin(), attribute->distinctValues.end(), double(cVal))) {
 								//Doesn't Exist - so add it
 								attribute->distinctValues.emplace_back(double(cVal));
-								cout << "adding treeClassification to list: : " << double(point->classification) << endl;
+								cout << "adding " << attribute->name << " to list: : " << double(point->classification) << endl;
 
 							}
 						}
@@ -926,20 +938,28 @@ namespace chunker_countsort_laszip {
 				target.max.y = std::max(target.max.y, source.max.y);
 				target.max.z = std::max(target.max.z, source.max.z);
 
-                //MC EDITS
-               if(target.name=="classification"){
-                    target.distinctValues = source.distinctValues;
-               }
+      //          //MC EDITS
+      //         if(target.name=="classification"){
+      //              target.distinctValues = source.distinctValues;
+      //         }
 
 			   //MC EDITS
-			   if (target.name == "return number") {
+			   if (source.usesDistinctValues) {
 				   target.distinctValues = source.distinctValues;
 			   }
 
-			   //MC EDITS
-			   if (target.name == "treeClassification") {
-				   target.distinctValues = source.distinctValues;
-			   }
+			   ////MC EDITS
+			   //if (target.name == "treeClassification") {
+				  // target.distinctValues = source.distinctValues;
+			   //}
+
+
+				 ////MC EDITS
+			   //if (target.name == "treeClassification") {
+				  // target.distinctValues = source.distinctValues;
+			   //}
+
+
 			}
 
 
@@ -967,7 +987,8 @@ namespace chunker_countsort_laszip {
 			int64_t numRead = 0;
 
 			vector<Source> tmpSources = { source };
-			Attributes inputAttributes = computeOutputAttributes(tmpSources, {});
+			//MC INSPECT
+			Attributes inputAttributes = computeOutputAttributes(tmpSources, {},{});
 
 			while (pointsLeft > 0) {
 
@@ -1030,20 +1051,27 @@ namespace chunker_countsort_laszip {
 			jsAttribute["description"] = attribute.description;
 			jsAttribute["type"] = getAttributeTypename(attribute.type);
 
-            //            MC EDIT
-            if (attribute.name == "classification"){
-                jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
-            }
 
 			//            MC EDIT
-			if ( attribute.name == "return number") {
+			if (attribute.usesDistinctValues) {
 				jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
 			}
-			
-			//            MC EDIT
-			if (attribute.name == "treeClassification") {
-				jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
-			}
+
+
+   //         //            MC EDIT
+   //         if (attribute.name == "classification"){
+   //             jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+   //         }
+
+			////            MC EDIT
+			//if ( attribute.name == "return number") {
+			//	jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+			//}
+			//
+			////            MC EDIT
+			//if (attribute.name == "treeClassification") {
+			//	jsAttribute["distinctValues"] = vector<int>{ attribute.distinctValues };
+			//}
 
 			if (attribute.numElements == 1) {
 				jsAttribute["min"] = vector<double>{ attribute.min.x };

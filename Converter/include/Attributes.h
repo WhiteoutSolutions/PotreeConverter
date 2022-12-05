@@ -114,6 +114,7 @@ struct Attribute {
 	int elementSize = 0;
 	AttributeType type = AttributeType::UNDEFINED;
     vector<int> distinctValues;
+	bool usesDistinctValues = false;
 
 	// TODO: should be type-dependent, not always double. won't work properly with 64 bit integers
 	Vector3 min = {Infinity, Infinity, Infinity};
@@ -123,14 +124,14 @@ struct Attribute {
 
 	}
 
-	Attribute(string name, int size, int numElements, int elementSize, AttributeType type,vector<int> distinctValues) {
+	Attribute(string name, int size, int numElements, int elementSize, AttributeType type,vector<int> distinctValues, bool useDistinctValues) {
 		this->name = name;
 		this->size = size;
 		this->numElements = numElements;
 		this->elementSize = elementSize;
 		this->type = type;
         this->distinctValues = distinctValues;
-
+		this->usesDistinctValues = useDistinctValues;
 	}
 };
 

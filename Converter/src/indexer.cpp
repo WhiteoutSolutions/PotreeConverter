@@ -82,46 +82,72 @@ namespace indexer{
 			auto jsMin = jsAttribute["min"];
 			auto jsMax = jsAttribute["max"];
 
+
+
 //            MC EDITS
             vector<int>  dValues ;
-            if (name == "classification" ){
-				//auto dVal = jsAttribute["distinctValues"];
+			bool useDValues = false;
+
+   //         if (name == "classification" ){
+			//	//auto dVal = jsAttribute["distinctValues"];
+			//	//if (dVal != nlohmann::detail::value_t::null) {
+			//		vector<int> a = jsAttribute["distinctValues"];
+			//		dValues = a;
+			//		useDValues = true;
+			//	//}
+   //             
+   //          
+   //         }
+
+			////MC EDITS
+			//if (name == "return number" ) {
+			//	auto dVal = jsAttribute["distinctValues"];
+
+			//	std::cout << "TYPE CLASS:::  " << typeid(dVal).name() << std::endl;
+			//	//if (dVal != nlohmann::detail::value_t::null) {
+			//	vector<int> a = jsAttribute["distinctValues"];
+			//	dValues = a;
+			//	useDValues = true;
+			//	//}
+			//}
+
+			//MC EDITS
+			//if ( name == "treeClassification") {
+			//	auto dVal = jsAttribute["distinctValues"];
+			//	//if (dVal != nlohmann::detail::value_t::null) {
+			//	vector<int> a = jsAttribute["distinctValues"];
+			//	dValues = a;
+			//	useDValues = true;
+			//	//}
+
+
+			//}
+
+			//if (name == "treeClassification") {
+				auto dVal = jsAttribute["distinctValues"];
+			
 				//if (dVal != nlohmann::detail::value_t::null) {
+				if (dVal.size() > 0)
+				{
 					vector<int> a = jsAttribute["distinctValues"];
+				if (a.size() > 0)
+				{
 					dValues = a;
-				//}
-                
-             
-            }
 
-			//MC EDITS
-			if (name == "return number" ) {
-				auto dVal = jsAttribute["distinctValues"];
-
-				std::cout << "TYPE CLASS:::  " << typeid(dVal).name() << std::endl;
-				//if (dVal != nlohmann::detail::value_t::null) {
-				vector<int> a = jsAttribute["distinctValues"];
-				dValues = a;
+				useDValues = true;
+				}
+				}
+				
+				
 				//}
 
 
-			}
-
-			//MC EDITS
-			if ( name == "treeClassification") {
-				auto dVal = jsAttribute["distinctValues"];
-				//if (dVal != nlohmann::detail::value_t::null) {
-				vector<int> a = jsAttribute["distinctValues"];
-				dValues = a;
-				//}
-
-
-			}
+			//}
 
 
 
 
-            Attribute attribute(name, size, numElements, elementSize, type, dValues);
+            Attribute attribute(name, size, numElements, elementSize, type, dValues,useDValues);
 
 
 //            if (name == "classification"){
@@ -414,9 +440,16 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 				ss << t(3) << s("min") << ": " << vecToJson(vector<double>{ attribute.min.x, attribute.min.y, attribute.min.z }) << "," << endl;
 				ss << t(3) << s("max") << ": " << vecToJson(vector<double>{ attribute.max.x, attribute.max.y, attribute.max.z }) << endl;
 			}
-              if ( attribute.name == "classification" || attribute.name == "return number" || attribute.name == "treeClassification") {
-                  ss << t(3) << s("distinctValues") << ": " << vecToJson2Int(vector<int>{ attribute.distinctValues }) << endl;
-              }
+
+
+			//MC EDITS
+			if (attribute.usesDistinctValues) {
+				ss << "," << t(3) << s("distinctValues") << ": " << vecToJson2Int(vector<int>{ attribute.distinctValues }) << endl;
+			}
+
+             /* if ( attribute.name == "classification" || attribute.name == "return number" || attribute.name == "treeClassification") {
+                  ss << "," << t(3) << s("distinctValues") << ": " << vecToJson2Int(vector<int>{ attribute.distinctValues }) << endl;
+              }*/
 
 		
 			if (i < attributes.list.size() - 1) {

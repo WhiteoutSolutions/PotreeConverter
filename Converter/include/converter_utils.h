@@ -163,6 +163,8 @@ struct Options {
 	string name = "";
 	string method = "";
 	string chunkMethod = "";
+	//MC EDITS
+	vector<string> distinctvalues;
 	//vector<string> flags;
 	vector<string> attributes;
 	bool generatePage = false;

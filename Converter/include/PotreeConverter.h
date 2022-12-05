@@ -6,6 +6,11 @@
 #include "Vector3.h"
 #include "LasLoader/LasLoader.h"
 
+
+
+
+using std::filesystem::current_path;
+
 struct Dbg {
 
 	bool isDebug = false;
@@ -76,8 +81,43 @@ inline ScaleOffset computeScaleOffset(Vector3 min, Vector3 max, Vector3 targetSc
 }
 
 
+//inline vector<string> getDistinctValueAttributeNames()
+//{
+//	std::filesystem::path cwd = std::filesystem::current_path();
+//	std::string pathAndFile = cwd.string() + "\\distinctValues.csv";
+//
+//	cout << "INFO: Setting Working folder and path for distinctValues.csv to:  " << pathAndFile << endl;
+//	std::ifstream  data(pathAndFile, ios::in);
+//	std::string line;
+//	std::vector<std::vector<std::string> > parsedCsv;
+//
+//	std::vector<std::string> parsedRow;
+//	if (data.is_open())
+//	{
+//		cout << "INFO: read & using distinctValues::: " ;
+//		while (std::getline(data, line))
+//	{
+//		std::stringstream lineStream(line);
+//		std::string cell;
+//		
+//		while (std::getline(lineStream, cell, ','))
+//		{
+//			cout << cell << "  ::  ";
+//			parsedRow.push_back(cell);
+//		}
+//
+//		parsedCsv.push_back(parsedRow);
+//	}
+//	}
+//
+//	
+//	cout <<  endl;
+//	return  parsedRow;
+//}
 
-inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
+
+
+inline vector<Attribute> parseExtraAttributes(LasHeader& header, vector<string>& distinctValues) {
 
 	vector<uint8_t> extraData;
 
@@ -91,6 +131,9 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
 	constexpr int recordSize = 192;
 	int numExtraAttributes = extraData.size() / recordSize;
 	vector<Attribute> attributes;
+
+	//MC EDITS
+	vector<string> dValAttNames = distinctValues;
 
 	for (int i = 0; i < numExtraAttributes; i++) {
 
@@ -107,7 +150,13 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
 
 		int size = info.numElements * elementSize;
         vector<int> dValues;
-		Attribute xyz(name, size, info.numElements, elementSize, info.type,dValues);
+		bool usesDistinct = false;
+		if (std::find(dValAttNames.begin(), dValAttNames.end(),name ) != dValAttNames.end())
+		{
+			// Element in vector.
+			usesDistinct = true;
+		}
+		Attribute xyz(name, size, info.numElements, elementSize, info.type,dValues,usesDistinct);
 
 		attributes.push_back(xyz);
 	}
@@ -116,28 +165,28 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header) {
 }
 
 
-inline vector<Attribute> computeOutputAttributes(LasHeader& header) {
+inline vector<Attribute> computeOutputAttributes(LasHeader& header, vector<string>& distinctValues) {
 	auto format = header.pointDataFormat;
     vector<int> dValues;
 
-	Attribute xyz("position", 12, 3, 4, AttributeType::INT32,  dValues);
-	Attribute intensity("intensity", 2, 1, 2, AttributeType::UINT16,  dValues);
-	Attribute returns("returns", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute returnNumber("return number", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute numberOfReturns("number of returns", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute classification("classification", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute scanAngleRank("scan angle rank", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute userData("user data", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute pointSourceId("point source id", 2, 1, 2, AttributeType::UINT16,dValues);
-	Attribute gpsTime("gps-time", 8, 1, 8, AttributeType::DOUBLE,dValues);
-	Attribute rgb("rgb", 6, 3, 2, AttributeType::UINT16,dValues);
-	Attribute wavePacketDescriptorIndex("wave packet descriptor index", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute byteOffsetToWaveformData("byte offset to waveform data", 8, 1, 8, AttributeType::UINT64,dValues);
-	Attribute waveformPacketSize("waveform packet size", 4, 1, 4, AttributeType::UINT32,dValues);
-	Attribute returnPointWaveformLocation("return point waveform location", 4, 1, 4, AttributeType::FLOAT,dValues);
-	Attribute XYZt("XYZ(t)", 12, 3, 4, AttributeType::FLOAT,dValues);
-	Attribute classificationFlags("classification flags", 1, 1, 1, AttributeType::UINT8,dValues);
-	Attribute scanAngle("scan angle", 2, 1, 2, AttributeType::INT16,dValues);
+	Attribute xyz("position", 12, 3, 4, AttributeType::INT32,  dValues, false);
+	Attribute intensity("intensity", 2, 1, 2, AttributeType::UINT16,  dValues,false);
+	Attribute returns("returns", 1, 1, 1, AttributeType::UINT8,dValues, true);
+	Attribute returnNumber("return number", 1, 1, 1, AttributeType::UINT8,dValues, true);
+	Attribute numberOfReturns("number of returns", 1, 1, 1, AttributeType::UINT8,dValues,true);
+	Attribute classification("classification", 1, 1, 1, AttributeType::UINT8,dValues,true);
+	Attribute scanAngleRank("scan angle rank", 1, 1, 1, AttributeType::UINT8,dValues,false);
+	Attribute userData("user data", 1, 1, 1, AttributeType::UINT8,dValues,false);
+	Attribute pointSourceId("point source id", 2, 1, 2, AttributeType::UINT16,dValues, false);
+	Attribute gpsTime("gps-time", 8, 1, 8, AttributeType::DOUBLE,dValues,false);
+	Attribute rgb("rgb", 6, 3, 2, AttributeType::UINT16,dValues,false);
+	Attribute wavePacketDescriptorIndex("wave packet descriptor index", 1, 1, 1, AttributeType::UINT8,dValues,false);
+	Attribute byteOffsetToWaveformData("byte offset to waveform data", 8, 1, 8, AttributeType::UINT64,dValues,false);
+	Attribute waveformPacketSize("waveform packet size", 4, 1, 4, AttributeType::UINT32,dValues,false);
+	Attribute returnPointWaveformLocation("return point waveform location", 4, 1, 4, AttributeType::FLOAT,dValues,false);
+	Attribute XYZt("XYZ(t)", 12, 3, 4, AttributeType::FLOAT,dValues,false);
+	Attribute classificationFlags("classification flags", 1, 1, 1, AttributeType::UINT8,dValues,true);
+	Attribute scanAngle("scan angle", 2, 1, 2, AttributeType::INT16,dValues,false);
 
 	vector<Attribute> list;
 
@@ -169,14 +218,14 @@ inline vector<Attribute> computeOutputAttributes(LasHeader& header) {
 		exit(123);
 	}
 
-	vector<Attribute> extraAttributes = parseExtraAttributes(header);
+	vector<Attribute> extraAttributes = parseExtraAttributes(header,distinctValues);
 
 	list.insert(list.end(), extraAttributes.begin(), extraAttributes.end());
 
 	return list;
 }
 
-inline Attributes computeOutputAttributes(vector<Source>& sources, vector<string> requestedAttributes) {
+inline Attributes computeOutputAttributes(vector<Source>& sources, vector<string> requestedAttributes, vector<string> distinctValues) {
 	// TODO: a bit wasteful to iterate over source files and load headers twice
 
 	Vector3 scaleMin = { Infinity, Infinity, Infinity };
@@ -192,11 +241,13 @@ inline Attributes computeOutputAttributes(vector<Source>& sources, vector<string
 	{
 		mutex mtx;
 		auto parallel = std::execution::par;
-		for_each(parallel, sources.begin(), sources.end(), [&mtx, &sources, &scaleMin, &min, &max, requestedAttributes, &fullAttributeList, &acceptedAttributeNames](Source source) {
+		for_each(parallel, sources.begin(), sources.end(), [&mtx, &sources, &scaleMin, &min, &max, requestedAttributes, &fullAttributeList, &acceptedAttributeNames, &distinctValues](Source source) {
 
 			auto header = loadLasHeader(source.path);
 
-			vector<Attribute> attributes = computeOutputAttributes(header);
+			vector<string> dv = distinctValues;
+			//MC INSPECT
+			vector<Attribute> attributes = computeOutputAttributes(header, dv);
 
 			mtx.lock();
 

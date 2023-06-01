@@ -113,18 +113,25 @@ struct Attribute {
 	int numElements = 0;
 	int elementSize = 0;
 	AttributeType type = AttributeType::UNDEFINED;
-    vector<int> distinctValues;
+	vector<int> distinctValues;
 	bool usesDistinctValues = false;
 
 	// TODO: should be type-dependent, not always double. won't work properly with 64 bit integers
 	Vector3 min = {Infinity, Infinity, Infinity};
 	Vector3 max = {-Infinity, -Infinity, -Infinity};
 
+	Vector3 scale = {1.0, 1.0, 1.0};
+	Vector3 offset = {0.0, 0.0, 0.0};
+
+	// histogram that counts occurances of points with same attribute value.
+	// only for 1 byte types, due to storage size
+	vector<int64_t> histogram = vector<int64_t>(256, 0);
+
 	Attribute() {
 
 	}
 
-	Attribute(string name, int size, int numElements, int elementSize, AttributeType type,vector<int> distinctValues, bool useDistinctValues) {
+	Attribute(string name, int size, int numElements, int elementSize, AttributeType type, vector<int> distinctValues, bool useDistinctValues) {
 		this->name = name;
 		this->size = size;
 		this->numElements = numElements;

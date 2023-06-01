@@ -47,6 +47,7 @@ struct Source {
 	int bytesPerPoint = 0;
 	Vector3 min;
 	Vector3 max;
+	string wktCRS = "";
 };
 
 struct State {
@@ -163,13 +164,13 @@ struct Options {
 	string name = "";
 	string method = "";
 	string chunkMethod = "";
-	//MC EDITS
 	vector<string> distinctvalues;
 	//vector<string> flags;
 	vector<string> attributes;
 	bool generatePage = false;
 	string pageName = "";
 	string pageTitle = "";
+	string projection = "";
 
 	bool keepChunks = false;
 	bool noChunking = false;

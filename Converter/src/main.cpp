@@ -12,12 +12,11 @@
 #include "Attributes.h"
 #include "PotreeConverter.h"
 #include "logger.h"
+#include "Monitor.h"
 
 #include "arguments/Arguments.hpp"
 
 using namespace std;
-
-
 
 Options parseArguments(int argc, char** argv) {
 	Arguments args(argc, argv);
@@ -32,10 +31,10 @@ Options parseArguments(int argc, char** argv) {
 	args.addArgument("no-chunking", "Disable chunking phase");
 	args.addArgument("no-indexing", "Disable indexing phase");
 	args.addArgument("attributes", "Attributes in output file");
-	//MC EDITS
-	args.addArgument("distinctvalues", "List of Distinct Values of the additional fields for calculating distinct values for the metadata.json");
+	args.addArgument("projection", "Add the projection of the pointcloud to the metadata");
 	args.addArgument("generate-page,p", "Generate a ready to use web page with the given name");
 	args.addArgument("title", "Page title used when generating a web page");
+	args.addArgument("distinctvalues", "List of Distinct Values of the additional fields for calculating distinct values for the metadata.json");
 
 	if (args.has("help")) {
 		cout << "PotreeConverter <source> -o <outdir>" << endl;
@@ -131,6 +130,7 @@ Options parseArguments(int argc, char** argv) {
 		pageName = args.get("generate-page").as<string>();
 	}
 	string pageTitle = args.get("title").as<string>();
+	string projection = args.get("projection").as<string>();
 
 	bool keepChunks = args.has("keep-chunks");
 	bool noChunking = args.has("no-chunking");
@@ -148,6 +148,7 @@ Options parseArguments(int argc, char** argv) {
 	options.generatePage = generatePage;
 	options.pageName = pageName;
 	options.pageTitle = pageTitle;
+	options.projection = projection;
 
 	options.keepChunks = keepChunks;
 	options.noChunking = noChunking;
@@ -301,66 +302,66 @@ Stats computeStats(vector<Source> sources){
 	return { min, max, totalBytes, totalPoints };
 }
 
-struct Monitor {
-	thread t;
-	bool stopRequested = false;
+// struct Monitor {
+// 	thread t;
+// 	bool stopRequested = false;
 
-	void stop() {
+// 	void stop() {
 
-		stopRequested = true;
+// 		stopRequested = true;
 
-		t.join();
-	}
-};
+// 		t.join();
+// 	}
+// };
 
-shared_ptr<Monitor> startMonitoring(State& state) {
+// shared_ptr<Monitor> startMonitoring(State& state) {
 
-	shared_ptr<Monitor> monitor = make_shared<Monitor>();
+// 	shared_ptr<Monitor> monitor = make_shared<Monitor>();
 
-	monitor->t = thread([monitor, &state]() {
+// 	monitor->t = thread([monitor, &state]() {
 
-		using namespace std::chrono_literals;
+// 		using namespace std::chrono_literals;
 
-		std::this_thread::sleep_for(1'000ms);
+// 		std::this_thread::sleep_for(1'000ms);
 
-		while (!monitor->stopRequested) {
+// 		while (!monitor->stopRequested) {
 
-			auto ram = getMemoryData();
-			auto CPU = getCpuData();
-			double GB = 1024.0 * 1024.0 * 1024.0;
+// 			auto ram = getMemoryData();
+// 			auto CPU = getCpuData();
+// 			double GB = 1024.0 * 1024.0 * 1024.0;
 
-			double throughput = (double(state.pointsProcessed) / state.duration) / 1'000'000.0;
+// 			double throughput = (double(state.pointsProcessed) / state.duration) / 1'000'000.0;
 
-			double progressPass = 100.0 * state.progress();
-			double progressTotal = (100.0 * double(state.currentPass - 1) + progressPass) / double(state.numPasses);
+// 			double progressPass = 100.0 * state.progress();
+// 			double progressTotal = (100.0 * double(state.currentPass - 1) + progressPass) / double(state.numPasses);
 
-			string strProgressPass = formatNumber(progressPass) + "%";
-			string strProgressTotal = formatNumber(progressTotal) + "%";
-			string strTime = formatNumber(now()) + "s";
-			string strDuration = formatNumber(state.duration) + "s";
-			string strThroughput = formatNumber(throughput) + "MPs";
+// 			string strProgressPass = formatNumber(progressPass) + "%";
+// 			string strProgressTotal = formatNumber(progressTotal) + "%";
+// 			string strTime = formatNumber(now()) + "s";
+// 			string strDuration = formatNumber(state.duration) + "s";
+// 			string strThroughput = formatNumber(throughput) + "MPs";
 
-			string strRAM = formatNumber(double(ram.virtual_usedByProcess) / GB, 1)
-				+ "GB (highest " + formatNumber(double(ram.virtual_usedByProcess_max) / GB, 1) + "GB)";
-			string strCPU = formatNumber(CPU.usage) + "%";
+// 			string strRAM = formatNumber(double(ram.virtual_usedByProcess) / GB, 1)
+// 				+ "GB (highest " + formatNumber(double(ram.virtual_usedByProcess_max) / GB, 1) + "GB)";
+// 			string strCPU = formatNumber(CPU.usage) + "%";
 
-			stringstream ss;
-			ss << "[" << strProgressTotal << ", " << strTime << "], "
-				<< "[" << state.name << ": " << strProgressPass << ", duration: " << strDuration << ", throughput: " << strThroughput << "]"
-				<< "[RAM: " << strRAM << ", CPU: " << strCPU << "]";
+// 			stringstream ss;
+// 			ss << "[" << strProgressTotal << ", " << strTime << "], "
+// 				<< "[" << state.name << ": " << strProgressPass << ", duration: " << strDuration << ", throughput: " << strThroughput << "]"
+// 				<< "[RAM: " << strRAM << ", CPU: " << strCPU << "]";
 
-			cout << ss.str() << endl;
+// 			cout << ss.str() << endl;
 
-			std::this_thread::sleep_for(1'000ms);
-		}
+// 			std::this_thread::sleep_for(1'000ms);
+// 		}
 
-	});
+// 	});
 
-	return monitor;
-}
+// 	return monitor;
+// }
 
 
-void chunking(Options& options, vector<Source>& sources, string targetDir, Stats& stats, State& state, Attributes outputAttributes) {
+void chunking(Options& options, vector<Source>& sources, string targetDir, Stats& stats, State& state, Attributes outputAttributes, Monitor* monitor) {
 
 	if (options.noChunking) {
 		return;
@@ -368,7 +369,7 @@ void chunking(Options& options, vector<Source>& sources, string targetDir, Stats
 
 	if (options.chunkMethod == "LASZIP") {
 
-		chunker_countsort_laszip::doChunking(sources, targetDir, stats.min, stats.max, state, outputAttributes);
+		chunker_countsort_laszip::doChunking(sources, targetDir, stats.min, stats.max, state, outputAttributes, monitor);
 
 	} else if (options.chunkMethod == "LAS_CUSTOM") {
 
@@ -510,10 +511,23 @@ void generatePage(string exePath, string pagedir, string pagename) {
 
 }
 
+#include "HierarchyBuilder.h"
+
 int main(int argc, char** argv) {
 
+	
+	// { // DEBUG STUFF
 
-	//_CrtDbgBreak();
+	// 	string hierarchyDir = "D:/dev/pointclouds/Riegl/retz_converted/.hierarchyChunks";
+	// 	int hierarchyStepSize = 4;
+
+	// 	HierarchyBuilder builder(hierarchyDir, hierarchyStepSize);
+	// 	builder.build();
+
+	// 	return 0;
+	// }
+
+
 
 	double tStart = now(); 
 
@@ -545,18 +559,21 @@ int main(int argc, char** argv) {
 		targetDir = targetDir + "/pointclouds/" + options.pageName;
 	}
 	cout << "target directory: '" << targetDir << "'" << endl;
+	fs::create_directories(targetDir);
 	logger::addOutputFile(targetDir + "/log.txt");
 
 	State state;
 	state.pointsTotal = stats.totalPoints;
 	state.bytesProcessed = stats.totalBytes;
 
-	auto monitor = startMonitoring(state);
+	// auto monitor = startMonitoring(state);
+	auto monitor = make_shared<Monitor>(&state);
+	monitor->start();
 
 
 	{ // this is the real important stuff
 
-		chunking(options, sources, targetDir, stats, state, outputAttributes);
+		chunking(options, sources, targetDir, stats, state, outputAttributes, monitor.get());
 
 		indexing(options, targetDir, state);
 

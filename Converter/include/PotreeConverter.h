@@ -6,9 +6,6 @@
 #include "Vector3.h"
 #include "LasLoader/LasLoader.h"
 
-
-
-
 using std::filesystem::current_path;
 
 struct Dbg {
@@ -81,85 +78,67 @@ inline ScaleOffset computeScaleOffset(Vector3 min, Vector3 max, Vector3 targetSc
 }
 
 
-//inline vector<string> getDistinctValueAttributeNames()
-//{
-//	std::filesystem::path cwd = std::filesystem::current_path();
-//	std::string pathAndFile = cwd.string() + "\\distinctValues.csv";
-//
-//	cout << "INFO: Setting Working folder and path for distinctValues.csv to:  " << pathAndFile << endl;
-//	std::ifstream  data(pathAndFile, ios::in);
-//	std::string line;
-//	std::vector<std::vector<std::string> > parsedCsv;
-//
-//	std::vector<std::string> parsedRow;
-//	if (data.is_open())
-//	{
-//		cout << "INFO: read & using distinctValues::: " ;
-//		while (std::getline(data, line))
-//	{
-//		std::stringstream lineStream(line);
-//		std::string cell;
-//		
-//		while (std::getline(lineStream, cell, ','))
-//		{
-//			cout << cell << "  ::  ";
-//			parsedRow.push_back(cell);
-//		}
-//
-//		parsedCsv.push_back(parsedRow);
-//	}
-//	}
-//
-//	
-//	cout <<  endl;
-//	return  parsedRow;
-//}
-
-
 
 inline vector<Attribute> parseExtraAttributes(LasHeader& header, vector<string>& distinctValues) {
 
-	vector<uint8_t> extraData;
+	// vector<uint8_t> extraData;
+	vector<Attribute> attributes;
+
+	vector<string> dValAttNames = distinctValues;
 
 	for (auto& vlr : header.vlrs) {
 		if (vlr.recordID == 4) {
-			extraData = vlr.data;
-			break;
+			auto extraData = vlr.data;
+
+			constexpr int recordSize = 192;
+			int numExtraAttributes = extraData.size() / recordSize;
+
+			for (int i = 0; i < numExtraAttributes; i++) {
+
+				int offset = i * recordSize;
+				uint8_t type = read<uint8_t>(extraData, offset + 2);
+				uint8_t options = read<uint8_t>(extraData, offset + 3);
+				
+				char chrName[32];
+				memcpy(chrName, extraData.data() + offset + 4, 32);
+				string name(chrName);
+
+				Vector3 aScale = {1.0, 1.0, 1.0};
+				Vector3 aOffset = {0.0, 0.0, 0.0};
+				if((options & 0b01000) != 0){
+					memcpy(&aScale, extraData.data() + offset + 112, 24);
+				}
+				if((options & 0b10000) != 0){
+					memcpy(&aOffset, extraData.data() + offset + 136, 24);
+				}
+
+				char chrDescription[32];
+				memcpy(chrDescription, extraData.data() + offset + 160, 32);
+				string description(chrDescription);
+
+				auto info = lasTypeInfo(type);
+				string typeName = getAttributeTypename(info.type);
+				int elementSize = getAttributeTypeSize(info.type);
+
+				int size = info.numElements * elementSize;
+				vector<int> dValues;
+				bool usesDistinct = false;
+				if (std::find(dValAttNames.begin(), dValAttNames.end(),name ) != dValAttNames.end())
+				{
+					// Element in vector.
+					usesDistinct = true;
+				}
+				Attribute xyz(name, size, info.numElements, elementSize, info.type,dValues,usesDistinct);
+				xyz.description = description;
+				xyz.scale = aScale;
+				xyz.offset = aOffset;
+
+				attributes.push_back(xyz);
+			}
 		}
 	}
 
-	constexpr int recordSize = 192;
-	int numExtraAttributes = extraData.size() / recordSize;
-	vector<Attribute> attributes;
-
-	//MC EDITS
-	vector<string> dValAttNames = distinctValues;
-
-	for (int i = 0; i < numExtraAttributes; i++) {
-
-		int offset = i * recordSize;
-		uint8_t type = read<uint8_t>(extraData, offset + 2);
-		uint8_t options = read<uint8_t>(extraData, offset + 3);
-		char chrName[32];
-		memcpy(chrName, extraData.data() + offset + 4, 32);
-		string name(chrName);
-
-		auto info = lasTypeInfo(type);
-		string typeName = getAttributeTypename(info.type);
-		int elementSize = getAttributeTypeSize(info.type);
-
-		int size = info.numElements * elementSize;
-        vector<int> dValues;
-		bool usesDistinct = false;
-		if (std::find(dValAttNames.begin(), dValAttNames.end(),name ) != dValAttNames.end())
-		{
-			// Element in vector.
-			usesDistinct = true;
-		}
-		Attribute xyz(name, size, info.numElements, elementSize, info.type,dValues,usesDistinct);
-
-		attributes.push_back(xyz);
-	}
+	
 
 	return attributes;
 }
@@ -167,7 +146,8 @@ inline vector<Attribute> parseExtraAttributes(LasHeader& header, vector<string>&
 
 inline vector<Attribute> computeOutputAttributes(LasHeader& header, vector<string>& distinctValues) {
 	auto format = header.pointDataFormat;
-    vector<int> dValues;
+
+	vector<int> dValues;
 
 	Attribute xyz("position", 12, 3, 4, AttributeType::INT32,  dValues, false);
 	Attribute intensity("intensity", 2, 1, 2, AttributeType::UINT16,  dValues,false);
@@ -246,7 +226,6 @@ inline Attributes computeOutputAttributes(vector<Source>& sources, vector<string
 			auto header = loadLasHeader(source.path);
 
 			vector<string> dv = distinctValues;
-			//MC INSPECT
 			vector<Attribute> attributes = computeOutputAttributes(header, dv);
 
 			mtx.lock();

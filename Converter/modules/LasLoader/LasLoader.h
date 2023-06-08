@@ -25,6 +25,8 @@ struct LasHeader {
 	Vector3 max;
 	Vector3 scale;
 	Vector3 offset;
+	
+	vector<uint8_t> wktCRS;
 
 	int64_t numPoints = 0;
 

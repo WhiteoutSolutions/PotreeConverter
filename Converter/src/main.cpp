@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <execution>
-#include <proj.h>
 
 #include "unsuck/unsuck.hpp"
 #include "chunker_countsort_laszip.h"
@@ -215,7 +214,6 @@ Curated curateSources(vector<string> paths) {
 		source.max = max;
 		source.numPoints = header.numPoints;
 		source.filesize = filesize;
-		source.wktCRS = std::string(header.wktCRS.begin(), header.wktCRS.end());
 
 		lock_guard<mutex> lock(mtx);
 		sources.push_back(source);
@@ -513,24 +511,6 @@ void generatePage(string exePath, string pagedir, string pagename) {
 
 }
 
-std::string getProj4String(const std::string& wktString) {
-	PJ_CONTEXT* ctx = proj_context_create();
-	PJ* crs = proj_create(ctx, wktString.c_str());
-
-	if (!crs) {
-		std::cout << "Failed to create coordinate reference system." << std::endl;
-		return "";
-	}
-
-	const char* proj4String = proj_as_proj_string(ctx, crs, PJ_PROJ_4, nullptr);
-	std::string result(proj4String);
-
-	proj_destroy(crs);
-	proj_context_destroy(ctx);
-
-	return result;
-}
-
 #include "HierarchyBuilder.h"
 
 int main(int argc, char** argv) {
@@ -563,20 +543,6 @@ int main(int argc, char** argv) {
 	auto [name, sources] = curateSources(options.source);
 	if (options.name.size() == 0) {
 		options.name = name;
-	}
-	cout << "Argument projection: " << options.projection << endl;
-	if (options.projection.size() == 0) {
-		bool foundValidProjection = false;
-		for_each(sources.begin(), sources.end(), [&foundValidProjection, &options](const Source& source) {
-			if (!foundValidProjection && !source.wktCRS.empty()) {
-				foundValidProjection = true;
-				// Do something with the valid projection
-				cout << "Found valid projection: " << source.wktCRS << endl;
-				std::string proj4String = getProj4String(source.wktCRS);
-				cout << "Converted Proj4: " << proj4String << endl;
-				options.projection = escapeJsonString(proj4String);
-			}
-		});
 	}
 
 	auto outputAttributes = computeOutputAttributes(sources, options.attributes, options.distinctvalues);

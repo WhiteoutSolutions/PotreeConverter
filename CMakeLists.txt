@@ -47,15 +47,6 @@ add_subdirectory(${BROTLI_DIR})
 target_link_libraries(PotreeConverter brotlienc-static)
 target_link_libraries(PotreeConverter brotlidec-static)
 
-set(SQLITE_DIR "${PROJECT_SOURCE_DIR}/Converter/libs/sqlite3")
-add_subdirectory(${SQLITE_DIR})
-target_link_libraries(PotreeConverter sqlite3)
-
-set(PROJ4_DIR "${PROJECT_SOURCE_DIR}/Converter/libs/proj")
-add_subdirectory(${PROJ4_DIR})
-target_link_libraries(PotreeConverter proj-9.2.1)
-
-
 
 target_include_directories(PotreeConverter PRIVATE "./Converter/include")
 target_include_directories(PotreeConverter PRIVATE "./Converter/modules")

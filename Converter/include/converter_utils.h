@@ -156,41 +156,6 @@ inline void dbgPrint_ts_later(string message, bool now = false) {
 	
 }
 
-inline std::string escapeJsonString(const std::string& input) {
-    std::string escapedString;
-
-    for (char c : input) {
-        switch (c) {
-            case '\"':
-                escapedString += "\\\"";
-                break;
-            case '\\':
-                escapedString += "\\\\";
-                break;
-            case '\b':
-                escapedString += "\\b";
-                break;
-            case '\f':
-                escapedString += "\\f";
-                break;
-            case '\n':
-                escapedString += "\\n";
-                break;
-            case '\r':
-                escapedString += "\\r";
-                break;
-            case '\t':
-                escapedString += "\\t";
-                break;
-            default:
-                escapedString += c;
-                break;
-        }
-    }
-
-    return escapedString;
-}
-
 
 struct Options {
 	vector<string> source;

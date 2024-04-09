@@ -63,6 +63,7 @@ LasTypeInfo lasTypeInfo(int typeID) {
 	} else {
 		cout << "ERROR: unkown extra attribute type: " << typeID << endl;
 		exit(123);
+
 	}
 
 
@@ -105,7 +106,6 @@ LasHeader loadLasHeader(string path) {
 	result.pointDataFormat = header->point_data_format;
 
 	int numVlrs = header->number_of_variable_length_records;
-	bool projectionFound = false;
 	for (int i = 0; i < numVlrs; i++) {
 		auto laszip_vlr = header->vlrs[i];
 
@@ -118,26 +118,10 @@ LasHeader loadLasHeader(string path) {
 		memcpy(vlr.data.data(), laszip_vlr.data, vlr.recordLengthAfterHeader);
 
 		result.vlrs.push_back(vlr);
-
-		if (!projectionFound) {
-			int isProjectionRecord = std::strcmp(vlr.userID, "");
-			if (/*header->version_major == 1 && header->version_major == 2 && */isProjectionRecord) {
-				bool isWKTRecord = vlr.recordID == 2112;
-				if (isWKTRecord) {
-					//std::cout << "Projection record found: " << vlr.recordID << std::endl;
-					//std::cout << "Vector content: ";
-					//for (const auto& value : vlr.data)
-					//{
-					//	std::cout << value;
-					//}
-					//std::cout << std::endl;
-					result.wktCRS.resize(vlr.recordLengthAfterHeader);
-					memcpy(result.wktCRS.data(), laszip_vlr.data, vlr.recordLengthAfterHeader);
-					projectionFound = true;
-				}
-			}
-		}
 	}
+
+
+
 
 	laszip_close_reader(laszip_reader);
 	laszip_destroy(laszip_reader);

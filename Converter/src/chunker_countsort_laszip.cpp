@@ -490,10 +490,10 @@ namespace chunker_countsort_laszip {
 
 				attributeClassification->min.x = std::min(attributeClassification->min.x, double(value));
 				attributeClassification->max.x = std::max(attributeClassification->max.x, double(value));
-				if (!std::count(attributeClassification->distinctValues.begin(),attributeClassification->distinctValues.end(),double(point->classification))){
+				if (!std::count(attributeClassification->distinctValues.begin(),attributeClassification->distinctValues.end(),double(value))){
                     //Doesn't Exist - so add it
-                    attributeClassification->distinctValues.emplace_back(double(point->classification));
-                    cout << "adding Classification to list: : " << double(point->classification) << endl;
+                    attributeClassification->distinctValues.emplace_back(double(value));
+                    cout << "adding Classification to list: : " << double(value) << endl;
                 }
 			};
 
@@ -949,7 +949,9 @@ namespace chunker_countsort_laszip {
 				//}
 
 				if (source.usesDistinctValues) {
-					target.distinctValues = source.distinctValues;
+					target.distinctValues.insert(target.distinctValues.end(), source.distinctValues.begin(), source.distinctValues.end());
+					std::sort(target.distinctValues.begin(), target.distinctValues.end());
+					target.distinctValues.erase(std::unique(target.distinctValues.begin(), target.distinctValues.end()), target.distinctValues.end());
 				}
 
 				//if (target.name == "treeClassification") {

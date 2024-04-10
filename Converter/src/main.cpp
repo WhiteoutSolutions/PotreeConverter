@@ -214,6 +214,7 @@ Curated curateSources(vector<string> paths) {
 		source.max = max;
 		source.numPoints = header.numPoints;
 		source.filesize = filesize;
+		source.wktCRS = std::string(header.wktCRS.begin(), header.wktCRS.end());
 
 		lock_guard<mutex> lock(mtx);
 		sources.push_back(source);
@@ -511,6 +512,52 @@ void generatePage(string exePath, string pagedir, string pagename) {
 
 }
 
+std::string getProj4String(const std::string& wktString) {
+	// Write projString to a temporary text file
+	std::string tempFileName = "temp_proj_string.txt";
+	std::ofstream tempFile(tempFileName);
+	tempFile << wktString;
+	tempFile.close();
+
+	// Construct command with the path to the temporary text file
+	std::string command = "projinfo -o PROJ @" + tempFileName;
+
+	// Execute the command using system() and capture its output
+	std::string result;
+	FILE* pipe = _popen(command.c_str(), "r");
+	if (!pipe) {
+		return "Error: Unable to open pipe.";
+	}
+
+	char buffer[128];
+	while (!feof(pipe)) {
+		if (fgets(buffer, 128, pipe) != NULL)
+			result += buffer;
+	}
+	_pclose(pipe);
+
+	// Remove temporary text file
+	std::remove(tempFileName.c_str());
+
+	// Extract projection string part
+	std::istringstream iss(result);
+	std::string line;
+	while (std::getline(iss, line)) {
+		if (line.find("PROJ.4 string:") != std::string::npos) {
+			// Found the line containing the projection string
+			if (std::getline(iss, line)) {
+				// Extracted the projection string
+				return line;
+			}
+			else {
+				return "Error: Unable to extract projection string.";
+			}
+		}
+	}
+
+	return 0;
+}
+
 #include "HierarchyBuilder.h"
 
 int main(int argc, char** argv) {
@@ -543,6 +590,21 @@ int main(int argc, char** argv) {
 	auto [name, sources] = curateSources(options.source);
 	if (options.name.size() == 0) {
 		options.name = name;
+	}
+
+	cout << "Argument projection: " << options.projection << endl;
+	if (options.projection.size() == 0) {
+		bool foundValidProjection = false;
+		for_each(sources.begin(), sources.end(), [&foundValidProjection, &options](const Source& source) {
+			if (!foundValidProjection && !source.wktCRS.empty()) {
+				foundValidProjection = true;
+				// Do something with the valid projection
+				cout << "Found valid projection: " << source.wktCRS << endl;
+				std::string proj4String = getProj4String(source.wktCRS);
+				cout << "Converted Proj4: " << proj4String << endl;
+				options.projection = escapeJsonString(proj4String);
+			}
+			});
 	}
 
 	auto outputAttributes = computeOutputAttributes(sources, options.attributes, options.distinctvalues);

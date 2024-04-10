@@ -157,6 +157,53 @@ inline void dbgPrint_ts_later(string message, bool now = false) {
 }
 
 
+
+inline std::string escapeJsonString(const std::string& input) {
+	std::string escapedString;
+
+	for (char c : input) {
+		switch (c) {
+		case '\"':
+			escapedString += "\\\"";
+			break;
+		case '\\':
+			escapedString += "\\\\";
+			break;
+		case '\b':
+			escapedString += "\\b";
+			break;
+		case '\f':
+			escapedString += "\\f";
+			break;
+		case '\n':
+			escapedString += "\\n";
+			break;
+		case '\r':
+			escapedString += "\\r";
+			break;
+		case '\t':
+			escapedString += "\\t";
+			break;
+		default:
+			escapedString += c;
+			break;
+		}
+	}
+
+	return escapedString;
+}
+
+inline std::string escapeQuotes(const std::string& str) {
+	std::string escapedStr = str;
+	size_t pos = 0;
+	while ((pos = escapedStr.find('"', pos)) != std::string::npos) {
+		escapedStr.replace(pos, 1, "\\\"");
+		pos += 2; // Move past the escaped quote
+	}
+	return escapedStr;
+}
+
+
 struct Options {
 	vector<string> source;
 	string encoding = "DEFAULT"; // "BROTLI", "UNCOMPRESSED"

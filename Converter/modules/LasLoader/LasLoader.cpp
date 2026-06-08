@@ -71,6 +71,8 @@ LasTypeInfo lasTypeInfo(int typeID) {
 
 
 LasHeader loadLasHeader(string path) {
+
+	cout << "Loading las headers for: " << path << endl;
 	laszip_POINTER laszip_reader;
 	laszip_header* header;
 	laszip_point* point;
@@ -113,6 +115,7 @@ LasHeader loadLasHeader(string path) {
 		VLR vlr;
 
 		vlr.recordID = laszip_vlr.record_id;
+		strncpy(vlr.userID, laszip_vlr.user_id, sizeof(vlr.userID) - 1);
 		vlr.recordLengthAfterHeader = laszip_vlr.record_length_after_header;
 		vlr.data.resize(vlr.recordLengthAfterHeader);
 
@@ -120,11 +123,11 @@ LasHeader loadLasHeader(string path) {
 
 		result.vlrs.push_back(vlr);
 		if (!projectionFound) {
-			int isProjectionRecord = std::strcmp(vlr.userID, "");
-			if (/*header->version_major == 1 && header->version_major == 2 && */isProjectionRecord) {
+			int isProjectionRecord = std::strcmp(vlr.userID, "LASF_Projection");
+			if (isProjectionRecord == 0) {
 				bool isWKTRecord = vlr.recordID == 2112;
 				if (isWKTRecord) {
-					//std::cout << "Projection record found: " << vlr.recordID << std::endl;
+					std::cout << "Projection record found: " << vlr.recordID << std::endl;
 					//std::cout << "Vector content: ";
 					//for (const auto& value : vlr.data)
 					//{
@@ -140,6 +143,7 @@ LasHeader loadLasHeader(string path) {
 	}
 
 
+	cout << "Finished loading las headers for: " << path << endl;
 
 
 	laszip_close_reader(laszip_reader);

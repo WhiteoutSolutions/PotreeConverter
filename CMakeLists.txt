@@ -1,11 +1,33 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-project(PotreeConverter LANGUAGES CXX)
+project(PotreeConverter VERSION 2.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+
+execute_process(
+	COMMAND git rev-parse --short HEAD
+	WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+	OUTPUT_VARIABLE GIT_SHORT_HASH
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+	ERROR_QUIET
+)
+
+if(GIT_SHORT_HASH)
+	set(POTREE_CONVERTER_VERSION "${PROJECT_VERSION}-g${GIT_SHORT_HASH}")
+else()
+	set(POTREE_CONVERTER_VERSION "${PROJECT_VERSION}")
+endif()
+
+message(STATUS "PotreeConverter version: ${POTREE_CONVERTER_VERSION}")
+
+configure_file(
+	"${CMAKE_SOURCE_DIR}/cmake/potree_version.txt.in"
+	"${CMAKE_BINARY_DIR}/potree_version.txt"
+	@ONLY
+)
 
 #message(${PROJECT_SOURCE_DIR})
 
@@ -106,4 +128,10 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E copy
 		${PROJECT_SOURCE_DIR}/README.md
 		$<TARGET_FILE_DIR:${PROJECT_NAME}>/README.md)
+
+add_custom_command(
+	TARGET PotreeConverter POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy
+		${CMAKE_BINARY_DIR}/potree_version.txt
+		$<TARGET_FILE_DIR:${PROJECT_NAME}>/potree_version.txt)
 

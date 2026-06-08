@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <execution>
+#include <cstdlib>
 
 #include "unsuck/unsuck.hpp"
 #include "chunker_countsort_laszip.h"
@@ -513,48 +514,109 @@ void generatePage(string exePath, string pagedir, string pagename) {
 }
 
 std::string getProj4String(const std::string& wktString) {
+	cout << "=== getProj4String START ===" << endl;
+	cout << "Input WKT string length: " << wktString.length() << endl;
+	
 	// Write projString to a temporary text file
-	std::string tempFileName = "temp_proj_string.txt";
-	std::ofstream tempFile(tempFileName);
-	tempFile << wktString;
-	tempFile.close();
+	const char* appDataEnv = std::getenv("APPDATA");
+	if (!appDataEnv) {
+		cout << "ERROR: APPDATA environment variable not set" << endl;
+		return "Error: APPDATA environment variable not set.";
+	}
+	
+	cout << "APPDATA path: " << appDataEnv << endl;
+	
+	fs::path tempFilePath = fs::path(appDataEnv) / "temp_proj_string.txt";
+	std::string tempFileName = tempFilePath.string();
+	cout << "Temp file path: " << tempFileName << endl;
+	
+	try {
+		cout << "Creating and writing to temp file..." << endl;
+		std::ofstream tempFile(tempFileName);
+		
+		if (!tempFile.is_open()) {
+			cout << "ERROR: Failed to open temp file for writing" << endl;
+			return "Error: Failed to open temp file for writing.";
+		}
+		
+		tempFile << wktString;
+		if (tempFile.fail()) {
+			cout << "ERROR: Failed to write to temp file" << endl;
+			tempFile.close();
+			return "Error: Failed to write to temp file.";
+		}
+		
+		tempFile.close();
+		cout << "Temp file written successfully" << endl;
+		
+		// Verify file exists
+		if (fs::exists(tempFileName)) {
+			cout << "Temp file verified to exist" << endl;
+		} else {
+			cout << "ERROR: Temp file does not exist after creation" << endl;
+			return "Error: Temp file does not exist after creation.";
+		}
+		
+	} catch (const std::exception& e) {
+		cout << "ERROR during temp file creation: " << e.what() << endl;
+		return "Error: " + std::string(e.what());
+	}
 
 	// Construct command with the path to the temporary text file
 	std::string command = "projinfo -o PROJ @" + tempFileName;
+	cout << "Executing command: " << command << endl;
 
 	// Execute the command using system() and capture its output
 	std::string result;
 	FILE* pipe = _popen(command.c_str(), "r");
 	if (!pipe) {
+		cout << "ERROR: Unable to open pipe for projinfo command" << endl;
+		std::remove(tempFileName.c_str());
 		return "Error: Unable to open pipe.";
 	}
 
+	cout << "Reading output from projinfo..." << endl;
 	char buffer[128];
 	while (!feof(pipe)) {
-		if (fgets(buffer, 128, pipe) != NULL)
+		if (fgets(buffer, 128, pipe) != NULL) {
 			result += buffer;
+		}
 	}
-	_pclose(pipe);
+	int pipeExitCode = _pclose(pipe);
+	cout << "projinfo exit code: " << pipeExitCode << endl;
+	cout << "projinfo output length: " << result.length() << endl;
+	cout << "projinfo output:\n" << result << endl;
 
 	// Remove temporary text file
-	std::remove(tempFileName.c_str());
+	try {
+		std::remove(tempFileName.c_str());
+		cout << "Temp file deleted successfully" << endl;
+	} catch (const std::exception& e) {
+		cout << "ERROR deleting temp file: " << e.what() << endl;
+	}
 
 	// Extract projection string part
 	std::istringstream iss(result);
 	std::string line;
 	while (std::getline(iss, line)) {
 		if (line.find("PROJ.4 string:") != std::string::npos) {
+			cout << "Found PROJ.4 string line" << endl;
 			// Found the line containing the projection string
 			if (std::getline(iss, line)) {
 				// Extracted the projection string
+				cout << "Extracted projection: " << line << endl;
+				cout << "=== getProj4String END ===" << endl;
 				return line;
 			}
 			else {
+				cout << "ERROR: Unable to read next line after PROJ.4 string" << endl;
 				return "Error: Unable to extract projection string.";
 			}
 		}
 	}
 
+	cout << "ERROR: PROJ.4 string not found in output" << endl;
+	cout << "=== getProj4String END ===" << endl;
 	return 0;
 }
 
@@ -596,6 +658,7 @@ int main(int argc, char** argv) {
 	if (options.projection.size() == 0) {
 		bool foundValidProjection = false;
 		for_each(sources.begin(), sources.end(), [&foundValidProjection, &options](const Source& source) {
+			cout << "Looking at source: " << source.path << endl;
 			if (!foundValidProjection && !source.wktCRS.empty()) {
 				foundValidProjection = true;
 				// Do something with the valid projection
@@ -604,7 +667,7 @@ int main(int argc, char** argv) {
 				cout << "Converted Proj4: " << proj4String << endl;
 				options.projection = escapeJsonString(proj4String);
 			}
-			});
+		});
 	}
 
 	auto outputAttributes = computeOutputAttributes(sources, options.attributes, options.distinctvalues);

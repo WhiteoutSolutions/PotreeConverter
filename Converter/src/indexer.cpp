@@ -397,7 +397,7 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 	};
 
 	auto s = [](string str) {
-		return "\"" + str + "\"";
+		return "\"" + escapeJsonString(str) + "\"";
 	};
 
 	auto t = [](int numTabs) {
@@ -562,6 +562,7 @@ string Indexer::createMetadata(Options options, State& state, Hierarchy hierarch
 	ss << t(1) << s("description") << ": " << s("") << "," << endl;
 	ss << t(1) << s("points") << ": " << state.pointsTotal << "," << endl;
 	ss << t(1) << s("projection") << ": " << s(options.projection) << "," << endl;
+	ss << t(1) << s("originalWKT") << ": " << s(options.originalWKT) << "," << endl;
 	ss << t(1) << s("hierarchy") << ": " << getHierarchyJsonString() << "," << endl;
 	ss << t(1) << s("offset") << ": " << toJson(attributes.posOffset) << "," << endl;
 	ss << t(1) << s("scale") << ": " << toJson(attributes.posScale) << "," << endl;

@@ -563,7 +563,7 @@ std::string getProj4String(const std::string& wktString) {
 	}
 
 	// Construct command with the path to the temporary text file
-	std::string command = "projinfo -o PROJ @" + tempFileName;
+	std::string command = "projinfo -o PROJ @\"" + tempFileName + "\" 2>&1";
 	cout << "Executing command: " << command << endl;
 
 	// Execute the command using system() and capture its output
@@ -595,6 +595,11 @@ std::string getProj4String(const std::string& wktString) {
 		cout << "ERROR deleting temp file: " << e.what() << endl;
 	}
 
+	if (pipeExitCode != 0 || result.find("Parsing error") != std::string::npos) {
+		cout << "ERROR: projinfo conversion failed; leaving projection empty" << endl;
+		return "";
+	}
+
 	// Extract projection string part
 	std::istringstream iss(result);
 	std::string line;
@@ -617,7 +622,7 @@ std::string getProj4String(const std::string& wktString) {
 
 	cout << "ERROR: PROJ.4 string not found in output" << endl;
 	cout << "=== getProj4String END ===" << endl;
-	return 0;
+	return "";
 }
 
 #include "HierarchyBuilder.h"
@@ -660,12 +665,20 @@ int main(int argc, char** argv) {
 		for_each(sources.begin(), sources.end(), [&foundValidProjection, &options](const Source& source) {
 			cout << "Looking at source: " << source.path << endl;
 			if (!foundValidProjection && !source.wktCRS.empty()) {
+				std::string originalWKT = source.wktCRS;
+				while (!originalWKT.empty() && originalWKT.back() == '\0') {
+					originalWKT.pop_back();
+				}
+				if (originalWKT.empty()) {
+					return;
+				}
+
 				foundValidProjection = true;
-				// Do something with the valid projection
-				cout << "Found valid projection: " << source.wktCRS << endl;
-				std::string proj4String = getProj4String(source.wktCRS);
+				options.originalWKT = originalWKT;
+				cout << "Original WKT: " << originalWKT << endl;
+				std::string proj4String = getProj4String(originalWKT);
 				cout << "Converted Proj4: " << proj4String << endl;
-				options.projection = escapeJsonString(proj4String);
+				options.projection = proj4String;
 			}
 		});
 	}

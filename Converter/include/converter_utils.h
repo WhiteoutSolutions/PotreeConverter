@@ -218,6 +218,7 @@ struct Options {
 	string pageName = "";
 	string pageTitle = "";
 	string projection = "";
+	string originalWKT = "";
 
 	bool keepChunks = false;
 	bool noChunking = false;
